@@ -34,6 +34,8 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.InputMethodSubtype;
 
+import com.example.android.softkeyboard.emoji.EmojiKeyboardView;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,6 +64,8 @@ public class SoftKeyboard extends InputMethodService
     private InputMethodManager mInputMethodManager;
 
     private LatinKeyboardView mInputView;
+    private EmojiKeyboardView emojiKeyboardView;
+    private IBinder iBinder;
     private CandidateView mCandidateView;
     private CompletionInfo[] mCompletions;
     
@@ -120,6 +124,9 @@ public class SoftKeyboard extends InputMethodService
                 R.layout.input, null);
         mInputView.setOnKeyboardActionListener(this);
         setLatinKeyboard(mQwertyKeyboard);
+        emojiKeyboardView = (EmojiKeyboardView) getLayoutInflater().inflate(
+                R.layout.emoji_keyboard_layout, null);
+//        return emojiKeyboardView.getView();
         return mInputView;
     }
 
@@ -479,7 +486,7 @@ public class SoftKeyboard extends InputMethodService
     /**
      * Helper to send a key down / key up pair to the current editor.
      */
-    private void keyDownUp(int keyEventCode) {
+    public void keyDownUp(int keyEventCode) {
         getCurrentInputConnection().sendKeyEvent(
                 new KeyEvent(KeyEvent.ACTION_DOWN, keyEventCode));
         getCurrentInputConnection().sendKeyEvent(
@@ -504,6 +511,10 @@ public class SoftKeyboard extends InputMethodService
         }
     }
 
+    public void sendText(String text) {
+        getCurrentInputConnection().commitText(text, 1);
+    }
+
     // Implementation of KeyboardViewListener
 
     public void onKey(int primaryCode, int[] keyCodes) {
@@ -523,7 +534,8 @@ public class SoftKeyboard extends InputMethodService
             handleClose();
             return;
         } else if (primaryCode == LatinKeyboardView.KEYCODE_LANGUAGE_SWITCH) {
-            handleLanguageSwitch();
+            switchToKeyboardView(true);
+//            handleLanguageSwitch();
             return;
         } else if (primaryCode == LatinKeyboardView.KEYCODE_OPTIONS) {
             // Show a menu or somethin'
@@ -645,6 +657,7 @@ public class SoftKeyboard extends InputMethodService
     }
 
     private IBinder getToken() {
+//        return emojiKeyboardView.getWindowToken();
         final Dialog dialog = getWindow();
         if (dialog == null) {
             return null;
@@ -658,6 +671,10 @@ public class SoftKeyboard extends InputMethodService
 
     private void handleLanguageSwitch() {
         mInputMethodManager.switchToNextInputMethod(getToken(), false /* onlyCurrentIme */);
+    }
+
+    public void switchToKeyboardView(boolean isEmoji) {
+        setInputView(isEmoji ? emojiKeyboardView.getView() : mInputView);
     }
 
     private void checkToggleCapsLock() {
